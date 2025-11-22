@@ -8,3 +8,7 @@ wheels/
 
 # Virtual environments
 .venv
+
+# model
+candidate_eval_cross_encoder_poc/
+
