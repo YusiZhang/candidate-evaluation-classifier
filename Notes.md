@@ -1,30 +1,30 @@
 # Notes
 
-## Q: How does the model converge its probabilities into 4 labels?
+## Q: How does the model converge its probabilities into 3 labels?
 
 ### Architecture Overview
 
 ```
 Input: "[CLS] qualification text [SEP] candidate text [SEP]"
-         “
+         â†“
    DistilBERT Encoder (6 transformer layers)
-         “
+         â†“
    [CLS] token embedding (768-dim vector)
-         “
-   Classification Head (Linear: 768 ’ 4)
-         “
-   Raw logits: [score_0, score_1, score_2, score_3]
-         “
+         â†“
+   Classification Head (Linear: 768 â†’ 3)
+         â†“
+   Raw logits: [score_0, score_1, score_2]
+         â†“
    Softmax
-         “
-   Probabilities: [p_NOT_MATCH, p_PARTIAL_MATCH, p_MATCH, p_FORBIDDEN]
+         â†“
+   Probabilities: [p_NOT_MATCH, p_PARTIAL_MATCH, p_MATCH]
 ```
 
 ### Key Components
 
-1. **The Classification Head** - When creating the model with `num_labels=4`, Hugging Face adds a linear layer that projects the 768-dim `[CLS]` embedding to 4 values (one per label).
+1. **The Classification Head** - When creating the model with `num_labels=3`, Hugging Face adds a linear layer that projects the 768-dim `[CLS]` embedding to 3 values (one per label).
 
-2. **Training with Cross-Entropy Loss** - The model outputs 4 raw logits, compares them to the true label, and backpropagates to make the correct label's logit highest.
+2. **Training with Cross-Entropy Loss** - The model outputs 3 raw logits, compares them to the true label, and backpropagates to make the correct label's logit highest.
 
 3. **Softmax at Inference** - Converts logits to probabilities that sum to 1.
 

@@ -28,7 +28,6 @@ LABEL2ID: Dict[str, int] = {
     "NOT_MATCH": 0,
     "PARTIAL_MATCH": 1,
     "MATCH": 2,
-    "FORBIDDEN": 3,
 }
 ID2LABEL: Dict[int, str] = {v: k for k, v in LABEL2ID.items()}
 
@@ -181,18 +180,6 @@ def print_prediction(qualification: str, candidate: str, result: Dict):
 def run_demo_examples(model, tokenizer):
     """Run inference on a set of demo examples."""
     examples = [
-        # FORBIDDEN - discriminatory qualification
-        {
-            "qualification": "Only male applicants will be considered for this senior engineering role.",
-            "candidate": "Senior engineer with 10 years of experience in backend systems, based in San Jose, CA.",
-            "expected": "FORBIDDEN",
-        },
-        # FORBIDDEN - age discrimination
-        {
-            "qualification": "Looking for a young candidate under 30 years old.",
-            "candidate": "Software developer with 5 years of Python experience.",
-            "expected": "FORBIDDEN",
-        },
         # MATCH - location matches
         {
             "qualification": "Must be located in commutable distance to South Bay, California.",
