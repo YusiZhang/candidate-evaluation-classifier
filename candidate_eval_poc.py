@@ -328,6 +328,9 @@ def main():
     # 7) Train
     trainer.train()
 
+    # 7.5) Save tokenizer to output directory so inference can load it
+    tokenizer.save_pretrained(training_args.output_dir)
+
     # 8) Evaluate
     metrics = trainer.evaluate()
     print("\n=== Evaluation metrics on validation set ===")
