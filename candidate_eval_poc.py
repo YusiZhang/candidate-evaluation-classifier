@@ -40,8 +40,8 @@ ID2LABEL: Dict[int, str] = {v: k for k, v in LABEL2ID.items()}
 def generate_forbidden_qualification() -> Dict[str, str]:
     """
     Generate a synthetic example where the *qualification itself* is forbidden
-    due to being biased / discriminatory. The candidate text is generic because
-    the issue is with Q, not C.
+    due to being biased / discriminatory. The candidate text is varied and
+    realistic to prevent the model from learning spurious correlations.
     """
     forbidden_qual_templates = [
         # NOTE: These are *examples of disallowed criteria*, not endorsements.
@@ -51,16 +51,34 @@ def generate_forbidden_qualification() -> Dict[str, str]:
         "We only accept candidates from a specific nationality.",
         "We prefer candidates of a specific religion for this position.",
         "We do not consider candidates over 50 years old.",
+        "Female candidates only for this administrative position.",
+        "Must be a native English speaker, no exceptions.",
+        "Prefer unmarried candidates who can work long hours.",
+        "Looking for someone without children for better availability.",
+    ]
+
+    # Diverse, realistic candidate descriptions - no hints about the label!
+    # These mirror the style of candidates in MATCH/PARTIAL_MATCH/NOT_MATCH
+    neutral_candidates = [
+        "Senior engineer with 10 years of experience in backend systems, based in San Jose, CA.",
+        "Software developer with 5 years of Python experience and strong API skills.",
+        "Lives in Mountain View, California. Full-stack engineer with 3 years experience.",
+        "Junior developer with 2 years experience in JavaScript and React.",
+        "Recent CS graduate with internship experience at a major tech company.",
+        "Experienced professional with expertise in distributed systems and cloud architecture.",
+        "Backend developer skilled in Java and SQL with 4 years in fintech.",
+        "Product manager transitioning to engineering with 1 year of coding bootcamp training.",
+        "Lives in Austin, Texas. Data engineer with 6 years of experience in ETL pipelines.",
+        "Worked 5 years as a backend engineer using Python, with multiple projects in data processing.",
+        "Strong experience in JavaScript only, no mention of Python.",
+        "Lives in New York, but open to relocation to California in 6-12 months.",
+        "Software engineer with 5 years of experience in backend and distributed systems.",
+        "Junior engineer with 1.5 years of experience in frontend development.",
+        "Recent graduate with internship experience only, no full-time roles.",
     ]
 
     qualification = random.choice(forbidden_qual_templates)
-
-    # Candidate is just a normal, neutral profile; the label FORBIDDEN is about Q.
-    candidate = (
-        "Experienced professional with a solid track record in their field. "
-        "The candidate's background is typical and does not itself violate policy; "
-        "the issue is that the qualification is discriminatory."
-    )
+    candidate = random.choice(neutral_candidates)
 
     return {
         "qualification": qualification,
@@ -140,6 +158,7 @@ def generate_synthetic_example() -> Dict[str, str]:
         else:  # NOT_MATCH
             candidate = "Recent graduate with internship experience only, no full-time roles."
 
+    # columns: qualification, candidate, label are literal strings, they will be tokenized later
     return {
         "qualification": qualification,
         "candidate": candidate,
@@ -240,6 +259,14 @@ def main():
         batched=True,
         remove_columns=["qualification", "candidate", "label"],
     )
+    """
+    Before map:
+    qualification	    candidate	             label
+    "Python 5 years"	"I have 6 years Python"	 1
+    After map:
+    input_ids	        attention_mask	labels
+    [101, 2034, ...]	[1, 1, 1, ...]	1
+    """
 
     train_dataset = tokenized["train"]
     eval_dataset = tokenized["validation"]
@@ -325,12 +352,14 @@ def predict_single(qualification: str, candidate: str, tokenizer, model):
     import torch
 
     text = f"Qualification: {qualification}\nCandidate: {candidate}"
+    device = next(model.parameters()).device
     inputs = tokenizer(
         text,
         return_tensors="pt",
         truncation=True,
         max_length=MAX_LENGTH,
     )
+    inputs = {k: v.to(device) for k, v in inputs.items()}
 
     model.eval()
     with torch.no_grad():
